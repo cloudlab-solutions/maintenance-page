@@ -6,7 +6,11 @@ const ALLOWED_IPS = [
 	// Add more IPs as needed
 ];
 
-const app = new Hono<{ Bindings: Env }>();
+type Variables = {
+	bypassMaintenance?: boolean;
+};
+
+const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // Middleware to check if maintenance mode should be bypassed
 app.use("*", async (c, next) => {
