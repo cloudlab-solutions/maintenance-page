@@ -19,42 +19,50 @@ type Variables = {
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Middleware to check if maintenance mode should be bypassed
-app.use("*", async (c, next) => {
-	const clientIP = c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For");
-	
-	// If IP is in allowed list, bypass maintenance and serve normally
-	if (clientIP && ALLOWED_IPS.includes(clientIP)) {
-		c.set("bypassMaintenance", true);
-	}
-	
-	await next();
-	
-	// Inject site title and set 503 status for maintenance page (except for bypassed IPs)
-	if (c.res.headers.get("content-type")?.includes("text/html")) {
-		const hostname = new URL(c.req.url).hostname;
-		const siteTitle = DOMAIN_TITLES[hostname] || c.env.SITE_TITLE || "Site";
+app.get("/api/", (c) => c.json({ name: "Cloudflare" }));
+
+export default {
+	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+		// Check if IP should bypass maintenance
+		const clientIP = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For");
+		const bypassMaintenance = clientIP && ALLOWED_IPS.includes(clientIP);
 		
-		let html = await c.res.text();
-		html = html.replace(/<title>.*?<\/title>/, `<title>${siteTitle}</title>`);
+		// Handle API routes through Hono
+		if (new URL(request.url).pathname.startsWith("/api/")) {
+			return app.fetch(request, env, ctx);
+		}
 		
-		if (!c.get("bypassMaintenance")) {
+		// Get the asset response from Cloudflare
+		const response = await env.ASSETS.fetch(request);
+		
+		// Only modify HTML responses
+		if (response.headers.get("content-type")?.includes("text/html")) {
+			const hostname = new URL(request.url).hostname;
+			const siteTitle = DOMAIN_TITLES[hostname] || env.SITE_TITLE || "Site";
+			
+			let html = await response.text();
+			html = html.replace(/<title>.*?<\/title>/, `<title>${siteTitle}</title>`);
+			
+			// Return 503 for maintenance mode (except for bypassed IPs)
+			if (!bypassMaintenance) {
+				return new Response(html, {
+					status: 503,
+					statusText: "Service Unavailable",
+					headers: {
+						...Object.fromEntries(response.headers),
+						"Retry-After": "3600",
+						"Content-Type": "text/html; charset=utf-8"
+					}
+				});
+			}
+			
 			return new Response(html, {
-				status: 503,
-				statusText: "Service Unavailable",
-				headers: {
-					...Object.fromEntries(c.res.headers),
-					"Retry-After": "3600" // Suggest retry after 1 hour
-				}
+				status: response.status,
+				statusText: response.statusText,
+				headers: response.headers
 			});
 		}
 		
-		return new Response(html, {
-			headers: c.res.headers
-		});
+		return response;
 	}
-});
-
-app.get("/api/", (c) => c.json({ name: "Cloudflare" }));
-
-export default app;
+};
