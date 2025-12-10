@@ -1,65 +1,83 @@
-// src/App.tsx
-
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import cloudflareLogo from "./assets/Cloudflare_Logo.svg";
-import honoLogo from "./assets/hono.svg";
+import { useMemo } from "react";
 import "./App.css";
 
+const translations = {
+	en: {
+		title: "Under Maintenance",
+		message: "We're currently performing scheduled maintenance to improve your experience. We'll be back shortly!",
+		thanks: "Thank you for your patience."
+	},
+	es: {
+		title: "En Mantenimiento",
+		message: "Actualmente estamos realizando mantenimiento programado para mejorar tu experiencia. ¡Volveremos pronto!",
+		thanks: "Gracias por tu paciencia."
+	},
+	fr: {
+		title: "En Maintenance",
+		message: "Nous effectuons actuellement une maintenance programmée pour améliorer votre expérience. Nous serons de retour sous peu!",
+		thanks: "Merci pour votre patience."
+	},
+	de: {
+		title: "Wartungsarbeiten",
+		message: "Wir führen derzeit planmäßige Wartungsarbeiten durch, um Ihre Erfahrung zu verbessern. Wir sind bald zurück!",
+		thanks: "Vielen Dank für Ihre Geduld."
+	},
+	ja: {
+		title: "メンテナンス中",
+		message: "現在、サービス向上のため定期メンテナンスを実施しております。まもなく再開いたします。",
+		thanks: "ご不便をおかけして申し訳ございません。"
+	},
+	zh: {
+		title: "维护中",
+		message: "我们正在进行定期维护以改善您的体验。我们很快就会回来！",
+		thanks: "感谢您的耐心等待。"
+	},
+	pt: {
+		title: "Em Manutenção",
+		message: "Estamos realizando manutenção programada para melhorar sua experiência. Voltaremos em breve!",
+		thanks: "Obrigado pela sua paciência."
+	},
+	ru: {
+		title: "Технические работы",
+		message: "В настоящее время проводятся плановые технические работы для улучшения вашего опыта. Скоро вернемся!",
+		thanks: "Спасибо за ваше терпение."
+	},
+	ro: {
+		title: "În Mentenanță",
+		message: "În prezent efectuăm lucrări de mentenanță programate pentru a îmbunătăți experiența dumneavoastră. Revenim în curând!",
+		thanks: "Vă mulțumim pentru răbdare."
+	}
+};
+
 function App() {
-	const [count, setCount] = useState(0);
-	const [name, setName] = useState("unknown");
+	const t = useMemo(() => {
+		const userLang = navigator.language.split('-')[0];
+		return translations[userLang as keyof typeof translations] || translations.en;
+	}, []);
 
 	return (
-		<>
-			<div>
-				<a href="https://vite.dev" target="_blank">
-					<img src={viteLogo} className="logo" alt="Vite logo" />
-				</a>
-				<a href="https://react.dev" target="_blank">
-					<img src={reactLogo} className="logo react" alt="React logo" />
-				</a>
-				<a href="https://hono.dev/" target="_blank">
-					<img src={honoLogo} className="logo cloudflare" alt="Hono logo" />
-				</a>
-				<a href="https://workers.cloudflare.com/" target="_blank">
-					<img
-						src={cloudflareLogo}
-						className="logo cloudflare"
-						alt="Cloudflare logo"
-					/>
-				</a>
+		<div style={{
+			display: 'flex',
+			flexDirection: 'column',
+			alignItems: 'center',
+			justifyContent: 'center',
+			minHeight: '100vh',
+			textAlign: 'center',
+			padding: '2rem'
+		}}>
+			<div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
+				🔧
 			</div>
-			<h1>Vite + React + Hono + Cloudflare</h1>
-			<div className="card">
-				<button
-					onClick={() => setCount((count) => count + 1)}
-					aria-label="increment"
-				>
-					count is {count}
-				</button>
-				<p>
-					Edit <code>src/App.tsx</code> and save to test HMR
-				</p>
-			</div>
-			<div className="card">
-				<button
-					onClick={() => {
-						fetch("/api/")
-							.then((res) => res.json() as Promise<{ name: string }>)
-							.then((data) => setName(data.name));
-					}}
-					aria-label="get name"
-				>
-					Name from API is: {name}
-				</button>
-				<p>
-					Edit <code>worker/index.ts</code> to change the name
-				</p>
-			</div>
-			<p className="read-the-docs">Click on the logos to learn more</p>
-		</>
+			<h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
+				{t.title}
+			</h1>
+			<p style={{ fontSize: '1.2rem', color: '#888', maxWidth: '600px' }}>
+				{t.message}
+			</p>
+			<p style={{ fontSize: '0.9rem', color: '#666', marginTop: '2rem' }}>
+				{t.thanks}
+			</p>
+		</div>
 	);
 }
 
