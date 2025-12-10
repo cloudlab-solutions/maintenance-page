@@ -18,6 +18,17 @@
 		{
 			"pattern": "aesthetic-clinique.co.uk/*",
 			"zone_name": "aesthetic-clinique.co.uk"
+		},
+		{
+			"pattern": "smart-vet.ro/*",
+			"zone_name": "smart-vet.ro"
+		},
+		{
+			"pattern": "cloudstack-solutions.eu/*",
+			"zone_name": "cloudstack-solutions.eu"
 		}
-	]
+	],
+	"vars": {
+		"SITE_TITLE": "Aesthetic Clinique"
+	}
 }

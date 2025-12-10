@@ -6,6 +6,13 @@ const ALLOWED_IPS = [
 	// Add more IPs as needed
 ];
 
+// Map domains to their site titles
+const DOMAIN_TITLES: Record<string, string> = {
+	"aesthetic-clinique.co.uk": "Aesthetic Clinique",
+	"smart-vet.ro": "SmartVet",
+	"cloudstack-solutions.eu": "Cloudstack Solutions"
+};
+
 type Variables = {
 	bypassMaintenance?: boolean;
 };
@@ -22,6 +29,30 @@ app.use("*", async (c, next) => {
 	}
 	
 	await next();
+	
+	// Inject site title and set 503 status for maintenance page (except for bypassed IPs)
+	if (c.res.headers.get("content-type")?.includes("text/html")) {
+		const hostname = new URL(c.req.url).hostname;
+		const siteTitle = DOMAIN_TITLES[hostname] || c.env.SITE_TITLE || "Site";
+		
+		let html = await c.res.text();
+		html = html.replace(/<title>.*?<\/title>/, `<title>${siteTitle}</title>`);
+		
+		if (!c.get("bypassMaintenance")) {
+			return new Response(html, {
+				status: 503,
+				statusText: "Service Unavailable",
+				headers: {
+					...Object.fromEntries(c.res.headers),
+					"Retry-After": "3600" // Suggest retry after 1 hour
+				}
+			});
+		}
+		
+		return new Response(html, {
+			headers: c.res.headers
+		});
+	}
 });
 
 app.get("/api/", (c) => c.json({ name: "Cloudflare" }));
